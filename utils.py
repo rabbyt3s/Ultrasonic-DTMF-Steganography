@@ -34,9 +34,10 @@ def plot_signal(signal, sr, title, output_path, duration=None):
     plt.savefig(output_path)
     plt.close()
 
-def plot_fft(signal, sr, title, output_path, low_freq=15000, high_freq=21000):
+def plot_fft(signal, sr, title, output_path, low_freq=20000, high_freq=27000):
     """
     Generates and saves a plot of the filtered signal's Fourier transform.
+    Adjusted for ultrasonic frequencies (20-27 kHz)
     """
     import matplotlib.pyplot as plt
     from scipy.signal import butter, filtfilt
@@ -57,7 +58,7 @@ def plot_fft(signal, sr, title, output_path, low_freq=15000, high_freq=21000):
     plt.title(title)
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
-    plt.xlim(14000, 22000)
+    plt.xlim(19000, 28000)
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
