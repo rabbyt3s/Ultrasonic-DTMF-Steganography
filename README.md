@@ -1,128 +1,80 @@
+
 # Ultrasonic DTMF Steganography
 
-This project demonstrates how to **embed short text messages** into a standard WAV file by repurposing **DTMF (Dual-Tone Multi-Frequency)** at **ultrasonic** frequencies (around 16–20 kHz). The hidden signals are mostly inaudible to humans but can be recovered by applying a band-pass filter and an FFT-based frequency detection pipeline.
-
-## Features
-
-1. **Frequency Matrix**  
-   A set of \(\sim\)16–20 kHz “low” and “high” frequencies are mapped to A–Z, 0–9, etc. Characters are encoded as sine tone pairs in these ultrasonic bands.
-
-2. **Time Dispersion**  
-   Each character’s ultrasonic tone is placed at different positions in the audio, reducing the chance of overlapping signals and making the injection less noticeable.
-
-3. **Amplitudes and Fading**  
-   Sine waves undergo a fade-in/out to avoid clicks, and are scaled to keep amplitude below clipping levels.
-
-4. **Band-Pass + FFT Decoding**  
-   Decoding uses a band-pass filter around 15–21 kHz, splits audio into time blocks, then performs an FFT and peak detection to identify each pair of ultrasonic frequencies and rebuild the message.
+A simple proof-of-concept demonstrating how to **hide short text messages** within a WAV file by moving DTMF tones into the **16–20 kHz** ultrasonic range. Humans typically cannot hear those frequencies, but a filter and FFT-based decoder can extract them.
 
 ## Repository Structure
 
 ```
-ultrasonic-dtmf/
-├── src/
-│   ├── encode.py
-│   ├── decode.py
-│   ├── utils.py        # Optional helper functions
-│   └── compare_audio.py
-├── graphs/             # Generated waveforms, spectrograms, diff signals, etc.
-├── examples/           # Example WAV files
-├── README.md           # This file
-├── LICENSE             # Your chosen license
-└── requirements.txt    # Python dependencies
+rabbyt3s/
+├── README.md                        <-- This file
+├── Ultrasonic-DTMF-Steganography.pdf
+├── decode.py
+├── encode.py
+└── utils.py
 ```
 
-### Scripts Overview
+- **README.md**: Instructions and project overview.  
+- **Ultrasonic-DTMF-Steganography.pdf**: A more detailed document/paper about the project.  
+- **encode.py**: Script to embed ultrasonic messages into a WAV file.  
+- **decode.py**: Script to detect and decode those ultrasonic messages.  
+- **utils.py**: Optional helper functions (filtering, plotting, etc.).
 
-- **encode.py**  
-  Injects ultrasonic tones for each character into an existing WAV.  
-  - *Key parameters:*  
-    - `--ultrasonic_amp`: amplitude scaling for ultrasonic tones  
-    - `--char_dur`: duration of each character’s tone  
-    - `--sample_rate`: default 44100 Hz to keep 20 kHz within Nyquist
+## Quick Start
 
-- **decode.py**  
-  Reads the potentially ultrasonic-encoded WAV file, applies a band-pass filter, and uses block-wise FFT to locate DTMF-like pairs.  
-  - *Key parameters:*  
-    - `--sample_rate`: must match the WAV’s sample rate (e.g. 44100)  
-    - `--chunk_duration`: size of each block in seconds for FFT detection
-
-- **compare_audio.py** (Optional)  
-  Generates waveforms, spectrograms, and difference plots to visualize whether the ultrasonic injection is visible or not.
-
-## Installation
-
-1. **Clone** this repository or download the zip:
-   ```bash
-   git clone https://github.com/rabbyt3s/ultrasonic-dtmf.git
-   ```
-2. **Install Dependencies**:
-   ```bash
-   cd ultrasonic-dtmf
-   pip install -r requirements.txt
-   ```
-   Make sure you have Python 3.7+ and packages like `numpy`, `scipy`, `soundfile`, `matplotlib`.
-
-## Usage
-
-### 1. Encoding a Message
+### 1. Encoding an Ultrasonic Message
 
 ```bash
-python src/encode.py "HELLO ULTRA" examples/original.wav \
-    --output examples/encoded.wav \
-    --ultrasonic_amp 0.1 \
-    --char_dur 0.15 \
+python encode.py "HELLO ULTRASONIC" path/to/original.wav
+```
+
+- **`"HELLO ULTRASONIC"`**: The message text to embed.
+- **`path/to/original.wav`**: The input WAV file (should be 44.1 kHz for best results).
+
+By default:
+- **`--ultrasonic_amp`** (amplitude) is set to 0.1,  
+- **`--char_dur`** (duration per character) is 0.15 seconds,  
+- **`--sample_rate`** is 44100 Hz.
+
+If you want to override them, you can specify, for example:
+```bash
+python encode.py "HELLO" path/to/original.wav \
+    --output path/to/encoded.wav \
+    --ultrasonic_amp 0.2 \
+    --char_dur 0.12 \
     --sample_rate 44100
 ```
 
-- **`"HELLO ULTRA"`**: The message to embed.  
-- **`examples/original.wav`**: Your input WAV.  
-- **`--output examples/encoded.wav`**: The final file with ultrasonic injection.  
-- **`--ultrasonic_amp`**: If set too low, the injection may be undetectable (or lost). If set too high, it might become audible or cause clipping.
+Otherwise, **default values** will be used.
 
 ### 2. Decoding
 
 ```bash
-python src/decode.py examples/encoded.wav --sample_rate 44100
+python decode.py path/to/encoded.wav
 ```
 
-This will filter around ~15–21 kHz and perform block-wise FFT to detect pairs of frequencies, printing the recovered message to the terminal.
+Again, you can override certain parameters like `--sample_rate`, but they default to 44100 if omitted.
 
-### 3. Visualizing the Differences (Optional)
+### 3. Reviewing Results
 
-```bash
-python src/compare_audio.py
-# Then enter:
-# Original file: examples/original.wav
-# Encoded file:  examples/encoded.wav
-```
+1. **Check the console** output for the recovered text.  
+2. **(Optional)** Inspect the audio in an editor (like Audacity) to see if there’s additional energy around 16–20 kHz.  
+3. **(Optional)** Generate wave or spectrogram plots if you have separate visualization scripts.
 
-The script outputs images in `graphs/` showing:
-- **wave_original.png**  
-- **wave_encoded.png**  
-- **wave_diff.png**  
-- **spectrogram_comparison.png**
+## Notes and Limitations
 
-These confirm if ultrasonic tones are visible or remain subtle.
+- **Hardware Limitations**: Many standard speakers and mics roll off beyond ~18 kHz.  
+- **File Format**: Uncompressed WAV recommended. MP3/AAC compression can strip out high frequencies.  
+- **Data Capacity**: Each character is mapped to a pair of ultrasonic frequencies. Large messages may become more audible if amplitude is raised.  
+- **Amplitude Tuning**: If `--ultrasonic_amp` is too high, the signal could become faintly audible or distort the original. If too low, decoding might fail.
 
-## Tips and Limitations
+## More Details
 
-- **Hardware Roll-Off**: Many consumer speakers and microphones attenuate or distort signals above ~18 kHz. Success varies by device.  
-- **Compression**: Formats like MP3 typically remove high frequencies, destroying hidden data. Use uncompressed WAV for best results.  
-- **Amplitude Balancing**: Ultrasonic signals must be high enough for decoding but not so high that they become audible or damage the audio.  
-- **Data Capacity**: Each character consumes a chunk of time; this method is best for short messages.
-
-## License
-
-Choose a license that suits your project (MIT, Apache-2.0, etc.). See `LICENSE` for details.
+See **Ultrasonic-DTMF-Steganography.pdf** for a technical overview, including how the scripts work, the frequencies used, and best practices for successful encoding/decoding.
 
 ## Author
 
 **Yassine TAMANI**  
-GitHub: [rabbyt3s](https://github.com/rabbyt3s)  
+GitHub: [rabbyt3s](https://github.com/rabbyt3s)
 
-For questions, feedback, or collaboration requests, feel free to open an issue or submit a pull request.
-
----
-
-**Enjoy exploring ultrasonic DTMF steganography!** If you find this useful or have ideas for improvement, please reach out.
+Feel free to submit pull requests or open issues for suggestions/improvements. Enjoy experimenting with **Ultrasonic DTMF Steganography**!
