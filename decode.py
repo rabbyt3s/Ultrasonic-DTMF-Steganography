@@ -5,10 +5,11 @@ from scipy.signal import find_peaks, butter, filtfilt
 import argparse
 import os
 from utils import butter_bandpass, plot_fft
+import scipy.signal
 
 # Global Parameters and Matrices
-FREQS_LOW =  [16000, 16400, 16800, 17200, 17600, 18000, 18400]
-FREQS_HIGH = [18800, 19200, 19600, 20000, 20400]
+FREQS_LOW =  [20500, 21000, 21500, 22000, 22500, 23000, 23500]
+FREQS_HIGH = [24000, 24500, 25000, 25500, 26000]
 
 EXTENDED_MATRIX = [
     ['A', 'B', 'C', 'D', 'E'],
@@ -26,8 +27,8 @@ def find_frequencies(char):
             return FREQS_LOW[i], FREQS_HIGH[row.index(char)]
     return None
 
-def decode_ultrasonic_signal(audio_data, sr=44100, chunk_duration=0.2,
-                             lowcut=15000, highcut=21000):
+def decode_ultrasonic_signal(audio_data, sr=96000, chunk_duration=0.2,
+                             lowcut=20000, highcut=27000):
     """
     Decodes an audio signal containing a hidden ultrasonic message.
     """
@@ -106,14 +107,19 @@ def decode_ultrasonic_signal(audio_data, sr=44100, chunk_duration=0.2,
     return "".join(c[1] for c in char_positions)
 
 def decode_file(input_wav, output_graph="graphs/decoding_fft.png",
-                lowcut=15000, highcut=21000, chunk_duration=0.2, sample_rate=44100):
+                lowcut=20000, highcut=27000, chunk_duration=0.2, sample_rate=96000):
     """
     Offline decoding of a WAV file containing an ultrasonic message.
     """
     print(f"[OFFLINE DECODE] Reading '{input_wav}' ...")
     audio_data, sr = sf.read(input_wav)
+    
     if sr != sample_rate:
-        raise ValueError(f"Audio file must be sampled at {sample_rate} Hz")
+        print(f"[WARNING] Resampling from {sr} Hz to {sample_rate} Hz")
+        samples = len(audio_data)
+        new_samples = int(samples * (sample_rate / sr))
+        audio_data = scipy.signal.resample(audio_data, new_samples)
+        sr = sample_rate
     
     if audio_data.ndim > 1:
         audio_data = audio_data[:, 0]
@@ -130,9 +136,9 @@ def decode_file(input_wav, output_graph="graphs/decoding_fft.png",
     return message
 
 def main():
-    parser = argparse.ArgumentParser(description='Decodes a hidden message from a WAV audio file')
+    parser = argparse.ArgumentParser(description='Decodes a hidden message from a WAV file')
     parser.add_argument('input_file', help='Audio file to decode')
-    parser.add_argument('--sample_rate', '-s', type=int, default=44100, help='Sample rate (Hz)')
+    parser.add_argument('--sample_rate', '-s', type=int, default=96000, help='Sample rate (Hz)')
     args = parser.parse_args()
 
     try:
