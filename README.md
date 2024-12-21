@@ -104,21 +104,6 @@ python decode.py encoded_phrase_ultrasonic.wav
 
 This command decodes the hidden message from `encoded_phrase_ultrasonic.wav` and prints the recovered text to the console.
 
-### Comparing Original and Encoded Audio
-
-To visually inspect the encoding, you can use the `compare_audio.py` script:
-
-```bash
-python compare_audio.py original.wav encoded_phrase_ultrasonic.wav --output graphs
-```
-
-This generates the following in the `graphs` directory:
-- **wave_original.png**: Original audio waveform.
-- **wave_encoded.png**: Encoded audio waveform containing ultrasonic signals.
-- **spectrogram_comparison.png**: Comparative spectrograms showing ultrasonic bands injected around **20.5–26 kHz**.
-- **difference_spectrum.png**: Difference spectrum (if enabled).
-- **analysis_stats.txt**: Statistical analysis including SNR and amplitude ratios.
-
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request for any enhancements or bug fixes.
